@@ -56,7 +56,7 @@ const server = http.createServer((req, res) => {
   });
 });
 
-server.listen(PORT, () => {
+server.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running at http://localhost:${PORT}/`);
   console.log(`For iPhone testing, make sure your phone is on the same WiFi network`);
   

@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>RunSync Connection Test</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      background-color: #1a1a1a;
+      color: white;
+      padding: 20px;
+      text-align: center;
+    }
+    .box {
+      background-color: #333;
+      border-radius: 12px;
+      padding: 20px;
+      margin: 20px auto;
+      max-width: 500px;
+    }
+    h1 {
+      color: #9c5cff;
+    }
+    button {
+      background-color: #9c5cff;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 12px 24px;
+      font-size: 16px;
+      margin: 10px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h1>Connection Test Successful!</h1>
+    <p>If you're seeing this page, your iPhone is correctly connected to the RunSync development server.</p>
+    
+    <h2>Network Information:</h2>
+    <div id="network-info">Loading...</div>
+    
+    <div style="margin-top: 30px;">
+      <button onclick="playTestSound()">Test Sound (Click Me)</button>
+    </div>
+    
+    <div style="margin-top: 30px;">
+      <a href="/test-sound" style="color: #9c5cff;">Go to Sound Test Page</a>
+      <br><br>
+      <a href="/training" style="color: #9c5cff;">Go to Training Page</a>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById('network-info').innerHTML = `
+      <p>Page URL: ${window.location.href}</p>
+      <p>Your device: ${navigator.userAgent}</p>
+    `;
+    
+    function playTestSound() {
+      try {
+        // Create audio context
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        const ctx = new AudioContext();
+        
+        // Resume context (needed for iOS)
+        ctx.resume().then(() => {
+          // Create oscillator
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          
+          osc.type = 'sine';
+          osc.frequency.value = 440;
+          gain.gain.value = 0.5;
+          
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          
+          osc.start();
+          osc.stop(ctx.currentTime + 0.5);
+          
+          alert('If you heard a sound, audio is working!');
+        });
+      } catch (err) {
+        alert('Error playing sound: ' + err.message);
+      }
+    }
+  </script>
+</body>
+</html> 

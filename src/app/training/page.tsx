@@ -26,6 +26,7 @@ export default function Training() {
   const [distance, setDistance] = useState(0)
   const [soundEnabled, setSoundEnabled] = useState(true)
   const [soundType, setSoundType] = useState<SoundType>('basic')
+  const [audioInteracted, setAudioInteracted] = useState(false)
 
   const trainingPrograms: TrainingProgram = {
     beginner: [
@@ -106,6 +107,8 @@ export default function Training() {
   }
 
   const handleStartStop = () => {
+    setAudioInteracted(true)
+    
     if (isTrainingActive) {
       setIsTrainingActive(false);
     } else {
@@ -139,12 +142,12 @@ export default function Training() {
 
   return (
     <div className="p-6 max-w-6xl mx-auto text-white">
-      {/* Include the metronome sound component */}
-      {soundEnabled && <MetronomeSound 
-        isPlaying={isTrainingActive} 
-        targetBPM={currentExercise.targetSPM}
+      {/* Always include the metronome sound component */}
+      <MetronomeSound 
+        isPlaying={isTrainingActive && audioInteracted} 
+        targetBPM={currentExercise?.targetSPM || 170}
         soundType={soundType} 
-      />}
+      />
 
       <div className="border-b border-gray-700 pb-6 mb-6">
         <h1 className="text-3xl font-bold mb-2">Training Session</h1>
