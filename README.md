@@ -1,93 +1,76 @@
-# RunSync - Running Cadence Training App
+# RunSync
 
-RunSync is a Next.js application designed to help runners improve their running cadence (Steps Per Minute, SPM) through real-time tracking, music synchronization, and personalized training programs. The app combines features inspired by TrailMix, Weav Run, and Quick Steps, enhanced with modern web technologies.
+RunSync is a web application that helps runners improve their cadence with real-time feedback, music synchronization, and personalized training programs.
 
 ## Features
 
-- **Real-time Cadence Tracking**: Monitor your SPM in real-time with visual feedback
-- **Music Synchronization**: Adjust music BPM to match your target cadence
-- **Personalized Training**: Choose from beginner, intermediate, or advanced training programs
-- **Progress Tracking**: Visualize your improvement over time
-- **Responsive Design**: Works seamlessly on desktop and mobile devices
+- **Real-time Cadence Tracking**: Monitor your steps per minute (SPM) in real-time
+- **Music Synchronization**: Train with a metronome that syncs to your target cadence
+- **Personalized Training**: Choose from beginner, intermediate, or advanced programs
+- **Progressive Web App**: Install and use offline on iOS devices
 
-## Tech Stack
+## Installation Instructions for iPhone Testing
 
-- Next.js 14.x
-- TypeScript
-- Tailwind CSS
-- Tone.js for audio processing
-- Recharts for data visualization
-- Framer Motion for animations
-- Auth0 for authentication
-- n8n for workflow automation
+### For iPhone Users
 
-## Getting Started
+1. Connect to the same WiFi network as the host device.
+2. Open Safari on your iPhone and go to the URL provided by the host (e.g., http://192.168.1.123:8080).
+3. Try out the app in the browser first to make sure it works.
+4. To install it as an app on your home screen:
+   - Tap the Share button at the bottom of the screen (square with an arrow pointing up).
+   - Scroll down and tap "Add to Home Screen".
+   - You can rename the app if you wish, then tap "Add" in the top right corner.
+5. The RunSync app will now appear on your home screen like a native app!
+
+### For Developers
 
 1. Clone the repository:
-   ```bash
-   git clone https://github.com/yourusername/runsync.git
+   ```
+   git clone git@github.com:henrynkoh/runsync.git
    cd runsync
    ```
 
 2. Install dependencies:
-   ```bash
-   npm install
+   ```
+   npm install --legacy-peer-deps
    ```
 
-3. Create a `.env.local` file with required environment variables:
+3. Build the application:
    ```
-   NEXT_PUBLIC_AUTH0_DOMAIN=your-auth0-domain
-   NEXT_PUBLIC_AUTH0_CLIENT_ID=your-auth0-client-id
-   NEXT_PUBLIC_AUTH0_CALLBACK_URL=http://localhost:3000/api/auth/callback
+   npm run build
    ```
 
-4. Run the development server:
-   ```bash
-   npm run dev
+4. Serve the app for testing:
+   ```
+   npm run serve
    ```
 
-5. Open [http://localhost:3000](http://localhost:3000) in your browser.
+5. The app will be available at http://localhost:8080 and your local network IP address.
 
-## Project Structure
+## Technology Stack
 
-```
-runsync/
-├── src/
-│   ├── app/
-│   │   ├── api/
-│   │   ├── training/
-│   │   ├── layout.tsx
-│   │   └── page.tsx
-│   ├── components/
-│   │   └── ui/
-│   │       ├── CadenceTracker.tsx
-│   │       ├── MusicPlayer.tsx
-│   │       └── TrainingModule.tsx
-│   ├── lib/
-│   ├── styles/
-│   └── types/
-├── public/
-└── package.json
-```
+- **Frontend**: Next.js, React, TypeScript
+- **UI**: Tailwind CSS, Framer Motion
+- **Audio**: Tone.js for metronome and audio synchronization
+- **PWA**: Service Worker for offline functionality
 
 ## Development
 
-- `npm run dev`: Start development server
-- `npm run build`: Build production version
-- `npm run start`: Start production server
-- `npm run lint`: Run ESLint
+- Run the development server: `npm run dev`
+- Build the production version: `npm run build`
+- Serve the production build: `npm run serve`
 
 ## Contributing
 
 1. Fork the repository
 2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License - see the LICENSE file for details.
 
 ## Acknowledgments
 
