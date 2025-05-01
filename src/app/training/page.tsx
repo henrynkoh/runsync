@@ -25,7 +25,7 @@ export default function Training() {
   const [currentStep, setCurrentStep] = useState(0)
   const [distance, setDistance] = useState(0)
   const [soundEnabled, setSoundEnabled] = useState(true)
-  const [soundType, setSoundType] = useState<SoundType>('basic')
+  const [soundType, setSoundType] = useState<SoundType>('digital')
   const [audioInteracted, setAudioInteracted] = useState(false)
 
   const trainingPrograms: TrainingProgram = {
@@ -107,11 +107,10 @@ export default function Training() {
   }
 
   const handleStartStop = () => {
-    setAudioInteracted(true)
-    
     if (isTrainingActive) {
       setIsTrainingActive(false);
     } else {
+      setAudioInteracted(true);
       setCurrentStep(0);
       setElapsedTime(0);
       setDistance(0);
@@ -121,6 +120,7 @@ export default function Training() {
 
   const toggleSound = () => {
     setSoundEnabled(!soundEnabled);
+    setAudioInteracted(true);
   }
 
   // Format time as MM:SS
@@ -144,7 +144,7 @@ export default function Training() {
     <div className="p-6 max-w-6xl mx-auto text-white">
       {/* Always include the metronome sound component */}
       <MetronomeSound 
-        isPlaying={isTrainingActive && audioInteracted} 
+        isPlaying={isTrainingActive && soundEnabled} 
         targetBPM={currentExercise?.targetSPM || 170}
         soundType={soundType} 
       />

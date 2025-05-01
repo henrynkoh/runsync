@@ -10,21 +10,36 @@ interface MetronomeSoundProps {
 
 export default function MetronomeSound({ isPlaying, targetBPM, soundType = 'basic' }: MetronomeSoundProps) {
   const [audioReady, setAudioReady] = useState(false)
+  const [initializationAttempted, setInitializationAttempted] = useState(false)
+  const [initializationError, setInitializationError] = useState<string | null>(null)
   const audioContextRef = useRef<AudioContext | null>(null)
   const intervalIdRef = useRef<NodeJS.Timeout | null>(null)
 
-  // Initialize audio context
+  // Cleanup on unmount
   useEffect(() => {
     return () => {
-      // Clean up intervals on unmount
+      // Clean up intervals and audio context on unmount
       if (intervalIdRef.current) {
         clearInterval(intervalIdRef.current)
+      }
+      
+      if (audioContextRef.current) {
+        try {
+          audioContextRef.current.close().catch(err => {
+            console.error('Error closing AudioContext:', err)
+          })
+        } catch (err) {
+          console.error('Error during cleanup:', err)
+        }
       }
     }
   }, [])
 
   // Initialize audio
   const initializeAudio = async () => {
+    setInitializationAttempted(true)
+    setInitializationError(null)
+    
     try {
       // Create audio context if needed
       if (!audioContextRef.current) {
@@ -45,12 +60,15 @@ export default function MetronomeSound({ isPlaying, targetBPM, soundType = 'basi
       source.connect(ctx.destination)
       source.start(0)
       
-      // Play a test tone
+      // Play a test tone (helps verify audio is working)
+      await new Promise(resolve => setTimeout(resolve, 100))
       playTestTone()
       
       setAudioReady(true)
     } catch (err) {
       console.error('Audio initialization error:', err)
+      setInitializationError((err as Error).message || 'Unknown audio error')
+      setAudioReady(false)
     }
   }
   
@@ -83,6 +101,13 @@ export default function MetronomeSound({ isPlaying, targetBPM, soundType = 'basi
     
     try {
       const ctx = audioContextRef.current
+      
+      // Ensure context is running
+      if (ctx.state !== 'running') {
+        ctx.resume().catch(err => console.error('Error resuming context:', err))
+        return // Skip this click if context isn't ready
+      }
+      
       const osc = ctx.createOscillator()
       const gain = ctx.createGain()
       
@@ -119,11 +144,15 @@ export default function MetronomeSound({ isPlaying, targetBPM, soundType = 'basi
   
   // Start/stop the metronome
   useEffect(() => {
-    const startMetronome = () => {
+    const startMetronome = async () => {
       if (!audioContextRef.current || !audioReady) return
       
-      // Make sure context is running
-      audioContextRef.current.resume().then(() => {
+      try {
+        // Make sure context is running
+        if (audioContextRef.current.state !== 'running') {
+          await audioContextRef.current.resume()
+        }
+        
         // Clear any existing interval
         if (intervalIdRef.current) {
           clearInterval(intervalIdRef.current)
@@ -137,9 +166,9 @@ export default function MetronomeSound({ isPlaying, targetBPM, soundType = 'basi
         
         // Set up regular interval
         intervalIdRef.current = setInterval(playClick, intervalMs)
-      }).catch(err => {
-        console.error('Error resuming audio context:', err)
-      })
+      } catch (err) {
+        console.error('Error starting metronome:', err)
+      }
     }
     
     const stopMetronome = () => {
@@ -160,6 +189,11 @@ export default function MetronomeSound({ isPlaying, targetBPM, soundType = 'basi
     }
   }, [isPlaying, targetBPM, audioReady, soundType])
   
+  // Check if we're on iOS
+  const isIOS = typeof navigator !== 'undefined' && 
+    (/iPad|iPhone|iPod/.test(navigator.userAgent) || 
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1))
+  
   // Render audio initialization prompt if needed
   if (!audioReady) {
     return (
@@ -171,9 +205,19 @@ export default function MetronomeSound({ isPlaying, targetBPM, soundType = 'basi
         >
           ENABLE METRONOME SOUND
         </button>
+        {initializationAttempted && initializationError && (
+          <p className="mt-2 text-sm text-red-300">
+            Error: {initializationError}. Try tapping again.
+          </p>
+        )}
         <p className="mt-2 text-sm opacity-80">
-          iPhones require this step before playing any sound
+          {isIOS ? "iPhones require user interaction before playing sound" : "This unlocks audio playback"}
         </p>
+        {isIOS && (
+          <p className="mt-1 text-xs opacity-70">
+            Make sure your device is not on silent mode
+          </p>
+        )}
       </div>
     )
   }
