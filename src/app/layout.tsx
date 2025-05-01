@@ -1,10 +1,14 @@
 import React from 'react'
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
 import Script from 'next/script'
 
 const inter = Inter({ subsets: ['latin'] })
+
+export const viewport: Viewport = {
+  themeColor: '#0070f3',
+}
 
 export const metadata: Metadata = {
   title: 'RunSync - Running Cadence Training',
@@ -13,7 +17,6 @@ export const metadata: Metadata = {
   icons: {
     apple: '/icons/icon-192.png',
   },
-  themeColor: '#0070f3',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',

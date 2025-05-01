@@ -10,15 +10,10 @@
     "serve": "node scripts/serve.js"
   },
   "dependencies": {
-    "@auth0/nextjs-auth0": "^3.5.0",
-    "@capacitor/cli": "^7.2.0",
-    "@capacitor/core": "^7.2.0",
-    "@capacitor/ios": "^7.2.0",
     "@spotify/web-api-ts-sdk": "^1.2.0",
     "autoprefixer": "^10.0.1",
     "axios": "^1.7.2",
     "framer-motion": "^11.3.8",
-    "n8n-nodes-base": "^1.0.0",
     "next": "14.2.5",
     "postcss": "^8",
     "react": "^18",
