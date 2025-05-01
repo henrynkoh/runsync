@@ -9,161 +9,174 @@ interface MetronomeSoundProps {
 }
 
 export default function MetronomeSound({ isPlaying, targetBPM, soundType = 'basic' }: MetronomeSoundProps) {
-  const [audioInitialized, setAudioInitialized] = useState(false)
-  const [showPrompt, setShowPrompt] = useState(true)
+  const [audioReady, setAudioReady] = useState(false)
   const audioContextRef = useRef<AudioContext | null>(null)
-  const intervalRef = useRef<NodeJS.Timeout | null>(null)
+  const intervalIdRef = useRef<NodeJS.Timeout | null>(null)
 
-  // Create audio context on component mount
+  // Initialize audio context
   useEffect(() => {
-    if (typeof window === 'undefined') return
-
-    try {
-      const AudioContext = window.AudioContext || (window as any).webkitAudioContext
-      audioContextRef.current = new AudioContext()
-    } catch (err) {
-      console.error("Failed to create AudioContext:", err)
-    }
-    
     return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current)
+      // Clean up intervals on unmount
+      if (intervalIdRef.current) {
+        clearInterval(intervalIdRef.current)
       }
     }
   }, [])
 
-  // Initialize audio and hide the prompt
-  const initializeAudio = () => {
-    if (!audioContextRef.current) {
-      console.error("No AudioContext available")
-      return
-    }
-    
-    audioContextRef.current.resume().then(() => {
-      // Play a silent sound to fully unlock audio on iOS
-      try {
-        if (!audioContextRef.current) return;
-        
-        const buffer = audioContextRef.current.createBuffer(1, 1, 22050)
-        const source = audioContextRef.current.createBufferSource()
-        source.buffer = buffer
-        source.connect(audioContextRef.current.destination)
-        source.start(0)
-        
-        // Play a test click
-        playClick()
-        
-        setAudioInitialized(true)
-        setShowPrompt(false)
-      } catch (err) {
-        console.error("Error during audio initialization:", err)
+  // Initialize audio
+  const initializeAudio = async () => {
+    try {
+      // Create audio context if needed
+      if (!audioContextRef.current) {
+        const AudioContext = window.AudioContext || (window as any).webkitAudioContext
+        audioContextRef.current = new AudioContext()
       }
-    }).catch(err => {
-      console.error('Failed to start audio context:', err)
-    })
-  }
-
-  // Play a single click sound
-  const playClick = () => {
-    if (!audioContextRef.current || audioContextRef.current.state !== 'running') {
-      return
+      
+      // Make sure audio context is running
+      if (audioContextRef.current.state !== 'running') {
+        await audioContextRef.current.resume()
+      }
+      
+      // Play a silent sound to unlock audio on iOS
+      const ctx = audioContextRef.current
+      const buffer = ctx.createBuffer(1, 1, 22050)
+      const source = ctx.createBufferSource()
+      source.buffer = buffer
+      source.connect(ctx.destination)
+      source.start(0)
+      
+      // Play a test tone
+      playTestTone()
+      
+      setAudioReady(true)
+    } catch (err) {
+      console.error('Audio initialization error:', err)
     }
+  }
+  
+  // Play a simple test tone
+  const playTestTone = () => {
+    if (!audioContextRef.current) return
     
     try {
       const ctx = audioContextRef.current
-      
-      // Create oscillator and gain node
       const osc = ctx.createOscillator()
-      const gainNode = ctx.createGain()
+      const gain = ctx.createGain()
       
-      // Configure the oscillator based on the sound type
+      osc.frequency.value = 440
+      osc.type = 'sine'
+      gain.gain.value = 0.2
+      
+      osc.connect(gain)
+      gain.connect(ctx.destination)
+      
+      osc.start()
+      osc.stop(ctx.currentTime + 0.2)
+    } catch (err) {
+      console.error('Error playing test tone:', err)
+    }
+  }
+  
+  // Play a metronome click sound
+  const playClick = () => {
+    if (!audioContextRef.current) return
+    
+    try {
+      const ctx = audioContextRef.current
+      const osc = ctx.createOscillator()
+      const gain = ctx.createGain()
+      
+      // Configure based on sound type
       if (soundType === 'basic') {
         osc.type = 'sine'
         osc.frequency.value = 1200
       } else if (soundType === 'wood') {
         osc.type = 'triangle'
-        osc.frequency.value = 450 
+        osc.frequency.value = 450
       } else { // digital
         osc.type = 'square'
         osc.frequency.value = 880
       }
       
-      // Configure gain for volume envelope
-      gainNode.gain.value = 0
+      // Volume envelope
+      gain.gain.value = 0
       
-      // Connect nodes
-      osc.connect(gainNode)
-      gainNode.connect(ctx.destination)
+      osc.connect(gain)
+      gain.connect(ctx.destination)
       
-      // Create sharp attack and quick decay (click sound)
+      // Click sound
       const now = ctx.currentTime
-      gainNode.gain.setValueAtTime(0, now)
-      gainNode.gain.linearRampToValueAtTime(0.7, now + 0.005) // Very quick attack
-      gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.1) // Fast decay
+      gain.gain.setValueAtTime(0, now)
+      gain.gain.linearRampToValueAtTime(0.7, now + 0.005)
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1)
       
-      // Start and stop the oscillator
       osc.start(now)
       osc.stop(now + 0.1)
     } catch (err) {
-      console.error("Error playing click:", err)
+      console.error('Error playing click sound:', err)
     }
   }
-
-  // Start or stop the metronome based on isPlaying state
+  
+  // Start/stop the metronome
   useEffect(() => {
-    if (isPlaying && audioInitialized) {
-      // Clear previous interval
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current)
-      }
+    const startMetronome = () => {
+      if (!audioContextRef.current || !audioReady) return
       
-      // Make sure audio context is running
-      if (audioContextRef.current && audioContextRef.current.state !== 'running') {
-        audioContextRef.current.resume().catch(err => console.error("Failed to resume AudioContext:", err))
-      }
-      
-      // Calculate interval in milliseconds
-      const intervalMs = (60 / targetBPM) * 1000
-      
-      // Play a click immediately
-      playClick()
-      
-      // Set up interval for regular clicks
-      intervalRef.current = setInterval(playClick, intervalMs)
-    } else {
-      // Stop the metronome
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current)
-        intervalRef.current = null
+      // Make sure context is running
+      audioContextRef.current.resume().then(() => {
+        // Clear any existing interval
+        if (intervalIdRef.current) {
+          clearInterval(intervalIdRef.current)
+        }
+        
+        // Calculate interval from BPM
+        const intervalMs = (60 / targetBPM) * 1000
+        
+        // Play first click
+        playClick()
+        
+        // Set up regular interval
+        intervalIdRef.current = setInterval(playClick, intervalMs)
+      }).catch(err => {
+        console.error('Error resuming audio context:', err)
+      })
+    }
+    
+    const stopMetronome = () => {
+      if (intervalIdRef.current) {
+        clearInterval(intervalIdRef.current)
+        intervalIdRef.current = null
       }
     }
     
-    // Cleanup on unmount or when dependencies change
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current)
-      }
+    if (isPlaying && audioReady) {
+      startMetronome()
+    } else {
+      stopMetronome()
     }
-  }, [isPlaying, targetBPM, soundType, audioInitialized])
-
-  // Render the prompt if audio isn't initialized yet
-  if (!audioInitialized && showPrompt) {
+    
+    return () => {
+      stopMetronome()
+    }
+  }, [isPlaying, targetBPM, audioReady, soundType])
+  
+  // Render audio initialization prompt if needed
+  if (!audioReady) {
     return (
       <div className="fixed top-0 left-0 right-0 z-50 p-4 bg-purple-700 text-white text-center shadow-lg">
-        <p className="mb-2 font-bold text-lg">Audio needs to be enabled for the metronome</p>
+        <p className="mb-2 font-bold text-lg">Tap below to enable sound</p>
         <button 
           onClick={initializeAudio}
           className="px-8 py-4 bg-white text-purple-700 rounded-lg font-bold text-xl shadow-md active:bg-gray-200"
         >
-          TAP HERE TO ENABLE SOUND
+          ENABLE METRONOME SOUND
         </button>
         <p className="mt-2 text-sm opacity-80">
-          Required for iPhone - you must tap this button or you won't hear any sound
+          iPhones require this step before playing any sound
         </p>
       </div>
     )
   }
   
-  // No visual UI needed if initialized
   return null
 } 
