@@ -2,8 +2,10 @@
 
 import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
+import MetronomeSound from '../../components/MetronomeSound'
 
 type TrainingLevel = 'beginner' | 'intermediate' | 'advanced'
+type SoundType = 'basic' | 'wood' | 'digital'
 
 interface ExerciseStep {
   title: string
@@ -22,6 +24,8 @@ export default function Training() {
   const [isTrainingActive, setIsTrainingActive] = useState(false)
   const [currentStep, setCurrentStep] = useState(0)
   const [distance, setDistance] = useState(0)
+  const [soundEnabled, setSoundEnabled] = useState(true)
+  const [soundType, setSoundType] = useState<SoundType>('basic')
 
   const trainingPrograms: TrainingProgram = {
     beginner: [
@@ -97,6 +101,10 @@ export default function Training() {
     setIsTrainingActive(false);
   }
 
+  const handleSoundTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSoundType(e.target.value as SoundType);
+  }
+
   const handleStartStop = () => {
     if (isTrainingActive) {
       setIsTrainingActive(false);
@@ -106,6 +114,10 @@ export default function Training() {
       setDistance(0);
       setIsTrainingActive(true);
     }
+  }
+
+  const toggleSound = () => {
+    setSoundEnabled(!soundEnabled);
   }
 
   // Format time as MM:SS
@@ -127,31 +139,73 @@ export default function Training() {
 
   return (
     <div className="p-6 max-w-6xl mx-auto text-white">
+      {/* Include the metronome sound component */}
+      {soundEnabled && <MetronomeSound 
+        isPlaying={isTrainingActive} 
+        targetBPM={currentExercise.targetSPM}
+        soundType={soundType} 
+      />}
+
       <div className="border-b border-gray-700 pb-6 mb-6">
         <h1 className="text-3xl font-bold mb-2">Training Session</h1>
         <p className="text-gray-300">Improve your running cadence with real-time feedback and guided training.</p>
       </div>
 
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <p className="text-gray-300">
           {isTrainingActive ? 
             <span>Current cadence: <span className={`font-bold ${getAccuracyColor()}`}>{currentSPM}</span> spm</span> :
             <span>Target cadence: <span className="font-bold">{currentExercise.targetSPM}</span> spm</span>
           }
         </p>
-        <div className="flex items-center space-x-2">
-          <label htmlFor="level" className="text-gray-300">Training Level:</label>
-          <select 
-            id="level" 
-            value={trainingLevel} 
-            onChange={handleLevelChange}
-            className="bg-gray-700 text-white border border-gray-600 rounded px-3 py-1"
-            disabled={isTrainingActive}
-          >
-            <option value="beginner">Beginner</option>
-            <option value="intermediate">Intermediate</option>
-            <option value="advanced">Advanced</option>
-          </select>
+        <div className="flex flex-wrap items-center gap-4">
+          {/* Sound Controls */}
+          <div className="flex items-center gap-2">
+            <button 
+              onClick={toggleSound}
+              className="flex items-center space-x-1 text-gray-300 hover:text-white"
+            >
+              <span className={`text-sm ${soundEnabled ? 'text-green-400' : 'text-gray-500'}`}>
+                {soundEnabled ? 'Sound On' : 'Sound Off'}
+              </span>
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                {soundEnabled ? (
+                  <path fillRule="evenodd" d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.707.707L4.586 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.586l3.707-3.707a1 1 0 011.09-.217zM14.657 2.929a1 1 0 011.414 0A9.972 9.972 0 0119 10a9.972 9.972 0 01-2.929 7.071 1 1 0 01-1.414-1.414A7.971 7.971 0 0017 10c0-2.21-.894-4.208-2.343-5.657a1 1 0 010-1.414zm-2.829 2.828a1 1 0 011.415 0A5.983 5.983 0 0115 10a5.984 5.984 0 01-1.757 4.243 1 1 0 01-1.415-1.415A3.984 3.984 0 0013 10a3.983 3.983 0 00-1.172-2.828 1 1 0 010-1.415z" clipRule="evenodd" />
+                ) : (
+                  <path fillRule="evenodd" d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.707.707L4.586 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.586l3.707-3.707a1 1 0 011.09-.217zM12.293 7.293a1 1 0 011.414 0L15 8.586l1.293-1.293a1 1 0 111.414 1.414L16.414 10l1.293 1.293a1 1 0 01-1.414 1.414L15 11.414l-1.293 1.293a1 1 0 01-1.414-1.414L13.586 10l-1.293-1.293a1 1 0 010-1.414z" clipRule="evenodd" />
+                )}
+              </svg>
+            </button>
+            
+            {soundEnabled && (
+              <select 
+                value={soundType}
+                onChange={handleSoundTypeChange}
+                className="bg-gray-700 text-white border border-gray-600 rounded px-2 py-1 text-sm"
+                disabled={isTrainingActive}
+              >
+                <option value="basic">Basic Click</option>
+                <option value="wood">Metronome</option>
+                <option value="digital">Electronic</option>
+              </select>
+            )}
+          </div>
+
+          {/* Training Level Selection */}
+          <div className="flex items-center space-x-2">
+            <label htmlFor="level" className="text-gray-300">Training Level:</label>
+            <select 
+              id="level" 
+              value={trainingLevel} 
+              onChange={handleLevelChange}
+              className="bg-gray-700 text-white border border-gray-600 rounded px-3 py-1"
+              disabled={isTrainingActive}
+            >
+              <option value="beginner">Beginner</option>
+              <option value="intermediate">Intermediate</option>
+              <option value="advanced">Advanced</option>
+            </select>
+          </div>
         </div>
       </div>
 
